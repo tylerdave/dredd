@@ -1,4 +1,4 @@
-# Writing Dredd Hooks In Node.js
+# Writing Dredd Hooks in Node.js
 
 ## Usage
 
@@ -14,8 +14,6 @@ $ dredd apiary.apib http://localhost:30000 --hookfiles=./hooks*.js
 - Any modifications on the `transaction` object are propagated to the actual HTTP transactions.
 - You can use `hooks.log` function inside the hook function to print
   yours debug messages and other information.
-
-- [`configuration`](https://dredd.readthedocs.org/en/latest/usage/#configuration-object-for-dredd-class) object is populated on the `hooks` object
 
 ### Sync API
 
@@ -246,8 +244,3 @@ npm install -g babel-cli babel-preset-es2015
 echo '{ "presets": ["es2015"] }' > .babelrc
 babel-node `which dredd` test/fixtures/single-get.apib http://localhost:3000 --hookfiles=./es2015.js
 ```
-
-
-
-
-

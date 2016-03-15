@@ -11,7 +11,7 @@ which = require './which'
 
 class HooksWorkerClient
   constructor: (@runner) ->
-    options = @runner.hooks.configuration.options
+    options = @runner.configuration.options
     @language = options.language
     @timeout = options['hook-worker-timeout'] || 5000
     @connect_timeout = options['hook-worker-connect-timeout'] || 1500

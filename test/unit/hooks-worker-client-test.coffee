@@ -38,9 +38,7 @@ describe 'Hooks worker client', ->
 
     runner = new TransactionRunner {}
     runner.hooks = new Hooks(logs: [], logger: console)
-
-    runner.hooks.configuration =
-      options: {}
+    runner.configuration = {options: {}}
 
     for level in logLevels
       sinon.stub loggerStub, level, (msg1, msg2) ->
@@ -66,7 +64,7 @@ describe 'Hooks worker client', ->
       HooksWorkerClient.prototype.connectToHandler.restore()
 
     it 'should pipe spawned process stdout to the Dredd process stdout', (done) ->
-      runner.hooks.configuration.options.language = './test/fixtures/scripts/stdout.sh'
+      runner.configuration.options.language = './test/fixtures/scripts/stdout.sh'
       loadWorkerClient (err) ->
         assert.isUndefined err
 
@@ -78,7 +76,7 @@ describe 'Hooks worker client', ->
 
 
     it 'should pipe spawned process stderr to the Dredd process stderr', (done) ->
-      runner.hooks.configuration.options.language = './test/fixtures/scripts/stderr.sh'
+      runner.configuration.options.language = './test/fixtures/scripts/stderr.sh'
       loadWorkerClient (err) ->
         assert.isUndefined err
 
@@ -90,7 +88,7 @@ describe 'Hooks worker client', ->
 
     it 'should not set the error on worker if process gets intentionally killed by Dredd ' +
     'because it can be killed after all hooks execution if SIGTERM isn\'t handled', (done) ->
-      runner.hooks.configuration.options.language = './test/fixtures/scripts/endless-nosigterm.sh'
+      runner.configuration.options.language = './test/fixtures/scripts/endless-nosigterm.sh'
       loadWorkerClient (workerError) ->
         done workerError if workerError
 
@@ -100,7 +98,7 @@ describe 'Hooks worker client', ->
           done()
 
     it 'should include the status in the error if spawned process ends with non-zero exit status', (done) ->
-      runner.hooks.configuration.options.language = './test/fixtures/scripts/exit_3.sh'
+      runner.configuration.options.language = './test/fixtures/scripts/exit_3.sh'
       loadWorkerClient (workerError) ->
         done workerError if workerError
 
@@ -118,7 +116,7 @@ describe 'Hooks worker client', ->
           emitter.stderr = new EventEmitter
           emitter
 
-        runner.hooks['configuration'] =
+        runner.configuration =
           options:
             language: 'ruby'
             hookfiles: "somefile.rb"
@@ -131,7 +129,7 @@ describe 'Hooks worker client', ->
       afterEach ->
         childProcessStub.spawn.restore()
 
-        runner.hooks['configuration'] = undefined
+        runner.configuration = undefined
 
         whichStub.which.restore()
         HooksWorkerClient.prototype.terminateHandler.restore()
@@ -159,7 +157,7 @@ describe 'Hooks worker client', ->
       beforeEach ->
         sinon.stub whichStub, 'which', (command) -> false
 
-        runner.hooks['configuration'] =
+        runner.configuration =
           options:
             language: 'ruby'
             hookfiles: "somefile.rb"
@@ -182,7 +180,7 @@ describe 'Hooks worker client', ->
           emitter.stderr = new EventEmitter
           emitter
 
-        runner.hooks['configuration'] =
+        runner.configuration =
           options:
             language: 'python'
             hookfiles: "somefile.py"
@@ -195,7 +193,7 @@ describe 'Hooks worker client', ->
       afterEach ->
         childProcessStub.spawn.restore()
 
-        runner.hooks['configuration'] = undefined
+        runner.configuration = undefined
 
         whichStub.which.restore()
         HooksWorkerClient.prototype.terminateHandler.restore()
@@ -223,7 +221,7 @@ describe 'Hooks worker client', ->
       beforeEach ->
         sinon.stub whichStub, 'which', (command) -> false
 
-        runner.hooks['configuration'] =
+        runner.configuration =
           options:
             language: 'python'
             hookfiles: "somefile.py"
@@ -245,7 +243,7 @@ describe 'Hooks worker client', ->
           emitter.stderr = new EventEmitter
           emitter
 
-        runner.hooks['configuration'] =
+        runner.configuration =
           options:
             language: 'php'
             hookfiles: "somefile.py"
@@ -258,7 +256,7 @@ describe 'Hooks worker client', ->
       afterEach ->
         childProcessStub.spawn.restore()
 
-        runner.hooks['configuration'] = undefined
+        runner.configuration = undefined
 
         whichStub.which.restore()
         HooksWorkerClient.prototype.terminateHandler.restore()
@@ -286,7 +284,7 @@ describe 'Hooks worker client', ->
       beforeEach ->
         sinon.stub whichStub, 'which', (command) -> false
 
-        runner.hooks['configuration'] =
+        runner.configuration =
           options:
             language: 'php'
             hookfiles: "somefile.py"
@@ -308,7 +306,7 @@ describe 'Hooks worker client', ->
           emitter.stderr = new EventEmitter
           emitter
 
-        runner.hooks['configuration'] =
+        runner.configuration =
           options:
             language: 'perl'
             hookfiles: "somefile.py"
@@ -321,7 +319,7 @@ describe 'Hooks worker client', ->
       afterEach ->
         childProcessStub.spawn.restore()
 
-        runner.hooks['configuration'] = undefined
+        runner.configuration = undefined
 
         whichStub.which.restore()
         HooksWorkerClient.prototype.terminateHandler.restore()
@@ -349,7 +347,7 @@ describe 'Hooks worker client', ->
       beforeEach ->
         sinon.stub whichStub, 'which', (command) -> false
 
-        runner.hooks['configuration'] =
+        runner.configuration =
           options:
             language: 'perl'
             hookfiles: "somefile.py"
@@ -371,7 +369,7 @@ describe 'Hooks worker client', ->
           emitter.stderr = new EventEmitter
           emitter
 
-        runner.hooks['configuration'] =
+        runner.configuration =
           options:
             language: './my-fancy-command'
             hookfiles: "someotherfile"
@@ -384,7 +382,7 @@ describe 'Hooks worker client', ->
       afterEach ->
         childProcessStub.spawn.restore()
 
-        runner.hooks['configuration'] = undefined
+        runner.configuration = undefined
 
         HooksWorkerClient.prototype.terminateHandler.restore()
         whichStub.which.restore()
@@ -411,7 +409,7 @@ describe 'Hooks worker client', ->
     describe "after loading", ->
       beforeEach (done) ->
 
-        runner.hooks['configuration'] =
+        runner.configuration =
           options:
             language: 'ruby'
             hookfiles: "somefile.rb"
@@ -434,7 +432,7 @@ describe 'Hooks worker client', ->
 
 
       afterEach ->
-        runner.hooks['configuration'] = undefined
+        runner.configuration = undefined
 
         whichStub.which.restore()
         HooksWorkerClient.prototype.terminateHandler.restore()
@@ -487,7 +485,7 @@ describe 'Hooks worker client', ->
 
 
     it 'should connect to the server', (done) ->
-      runner.hooks.configuration.options.language = 'true'
+      runner.configuration.options.language = 'true'
 
       loadWorkerClient (err) ->
         assert.isUndefined err
@@ -510,7 +508,7 @@ describe 'Hooks worker client', ->
         if eventType.indexOf("All") > -1
           beforeEach (done) ->
             receivedData = ""
-            runner.hooks.configuration.options.language = 'true'
+            runner.configuration.options.language = 'true'
             sentData = clone [transaction]
             loadWorkerClient (err) ->
               assert.isUndefined err
@@ -520,7 +518,7 @@ describe 'Hooks worker client', ->
         else
           beforeEach (done) ->
             receivedData = ""
-            runner.hooks.configuration.options.language = 'true'
+            runner.configuration.options.language = 'true'
             sentData = clone transaction
             loadWorkerClient (err) ->
               assert.isUndefined err
@@ -603,7 +601,7 @@ describe 'Hooks worker client', ->
         if eventType.indexOf("All") > -1
           beforeEach (done) ->
             receivedData = ""
-            runner.hooks.configuration.options.language = 'true'
+            runner.configuration.options.language = 'true'
             sentData = clone [transaction]
             loadWorkerClient (err) ->
               assert.isUndefined err
@@ -613,7 +611,7 @@ describe 'Hooks worker client', ->
         else
           beforeEach (done) ->
             receivedData = ""
-            runner.hooks.configuration.options.language = 'true'
+            runner.configuration.options.language = 'true'
             sentData = clone transaction
             loadWorkerClient (err) ->
               assert.isUndefined err
@@ -665,7 +663,7 @@ describe 'Hooks worker client', ->
       done()
 
     it 'can be set to 10000', (done) ->
-      runner.hooks.configuration.options['hook-worker-timeout'] = 10000
+      runner.configuration.options['hook-worker-timeout'] = 10000
 
       hooksWorkerClient = new HooksWorkerClient(runner)
       assert.equal hooksWorkerClient.timeout, 10000

@@ -100,10 +100,6 @@ addHooks = (runner, transactions, callback) ->
   # Loading hookfiles from fs
   else
 
-    # Clone the configuration object to hooks.configuration to make it
-    # accessible in the node.js hooks API
-    runner.hooks.configuration = clone runner?.configuration
-
     # Expand globs
     files = []
     globs = [].concat runner?.configuration?.options?.hookfiles
