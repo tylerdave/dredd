@@ -32,7 +32,7 @@ master_doc = 'index'
 # General information about the project.
 project = 'Dredd'
 copyright = 'Apiary Czech Republic, s.r.o.'
-author = 'Apiary Czech Republic, s.r.o.'
+author = 'Apiary'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -86,8 +86,21 @@ html_static_path = ['_static']
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
 # directly to the root of the documentation.
-#
-# html_extra_path = []
+html_extra_path = [
+    # Following paths exist only to redirect from old URLs to new URLs.
+    # This is more properly done using an HTTP redirect, but unfortunately
+    # readthedocs.org's page redirection is broken (see
+    # https://github.com/rtfd/readthedocs.org/issues/1826). Once that bug is fixed,
+    # these files can be removed.
+    #
+    # TODO
+    # 'usage.html',
+    # 'usage/index.html',
+    # 'overview.html',
+    # 'overview/index.html',
+    # 'execution-lifecycle.html',
+    # 'execution-lifecycle/index.html',
+]
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.

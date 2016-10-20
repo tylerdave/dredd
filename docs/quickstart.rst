@@ -1,0 +1,164 @@
+Quickstart
+==========
+
+In following tutorial you can quickly learn how to test a simple HTTP
+API application with Dredd. The tested application will be very simple
+backend written in
+`Express.js <http://expressjs.com/starter/hello-world.html>`__.
+
+Prepare Your Environment
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you don't have `Node.js <https://nodejs.org/>`__ installed, you may
+want to use `nvm <https://github.com/creationix/nvm>`__ and install it.
+Once ``node`` and ``npm`` commands exist on your computer, install Dredd
+globally:
+
+::
+
+    $ npm install -g dredd
+
+Document Your API
+-----------------
+
+First, let's design the API we are about to build and test. That means
+you will need to create an API description file, which will document how
+your API should look like. Dredd supports two formats of API description
+documents:
+
+-  `API Blueprint <http://apiblueprint.org/>`__
+-  `Swagger <http://swagger.io/>`__
+
+If you choose API Blueprint, create a file called
+``api-description.apib`` in the root of your project and save it with
+following content:
+
+.. code:: markdown
+
+    FORMAT: 1A
+
+    # GET /
+    + Response 200 (application/json; charset=utf-8)
+
+            {"message": "Hello World!"}
+
+If you choose Swagger, create a file called ``api-description.yml``:
+
+.. code:: yaml
+
+    swagger: "2.0"
+    info:
+      version: "1.0"
+      title: Example API
+      license:
+        name: MIT
+    host: www.example.com
+    basePath: /
+    schemes:
+      - http
+    paths:
+      /:
+        get:
+          produces:
+            - application/json; charset=utf-8
+          responses:
+            200:
+              description: ""
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+
+Implement Your API
+------------------
+
+As we mentioned in the beginning, we'll use
+`Express.js <http://expressjs.com/starter/hello-world.html>`__ to
+implement the API. Install the framework by ``npm``:
+
+.. code:: sh
+
+    $ npm init
+    $ npm install express --save
+
+Now let's code the thing! Create a file called ``app.js`` with following
+contents:
+
+.. code:: javascript
+
+    var app = require('express')();
+
+    app.get('/', function(req, res) {
+      res.json({message: 'Hello World!'});
+    })
+
+    app.listen(3000);
+
+Test Your API
+-------------
+
+At this moment, the implementation is ready to be tested. Let's run the
+server as a background process and let's test it:
+
+.. code:: sh
+
+    $ node app.js &
+
+Finally, let Dredd validate whether your freshly implemented API
+complies with the description you have:
+
+.. code:: sh
+
+    $ dredd api-description.apib http://localhost:3000  # API Blueprint
+    $ dredd api-description.yml http://localhost:3000  # Swagger
+
+Configure Dredd
+---------------
+
+Dredd can be configured by `many CLI options <usage-cli.md>`__. It's
+recommended to save your Dredd configuration alongside your project, so
+it's easier to repeatedly execute always the same test run. Use
+interactive configuration wizard to create ``dredd.yml`` file in the
+root of your project:
+
+::
+
+    $ dredd init
+    ? Location of the API description document: api-description.apib
+    ? Command to start API backend server e.g. (bundle exec rails server)
+    ? URL of tested API endpoint: http://localhost:3000
+    ? Programming language of hooks:
+    ❯ nodejs
+      python
+      ruby
+      ...
+    ? Dredd is best served with Continuous Integration. Create CircleCI config for Dredd? Yes
+
+Now you can start test run just by typing ``dredd``!
+
+::
+
+    $ dredd
+
+Use Hooks
+---------
+
+Dredd's `hooks <hooks.md>`__ enable you to write some glue code in your
+favorite language to support enhanced scenarios in your API tests. Read
+the documentation about hooks to learn more on how to write them. Choose
+your language and install corresponding hook handler library.
+
+Advanced Examples
+-----------------
+
+For more complex example applications, please refer to:
+
+-  `Express.js example
+   application <http://github.com/apiaryio/dredd-example>`__
+-  `Ruby on Rails example
+   application <https://github.com/theodorton/dredd-test-rails>`__
+-  `Laravel example
+   application <https://github.com/ddelnano/dredd-hooks-php/wiki/Laravel-Example>`__
