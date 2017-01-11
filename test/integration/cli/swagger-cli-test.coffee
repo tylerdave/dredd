@@ -8,7 +8,7 @@ fs = require 'fs'
 PORT = 8887
 
 
-describe 'CLI - Swagger Document', ->
+describe.skip 'CLI - Swagger Document', ->
   server = undefined
   configureServer = (app) ->
     app.get '/single-get.yaml', (req, res) ->

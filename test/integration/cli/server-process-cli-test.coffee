@@ -7,7 +7,7 @@ PORT = 8887
 PORT_NON_EXISTENT = PORT + 1
 
 
-describe 'CLI - Server Process', ->
+describe.skip 'CLI - Server Process', ->
 
   describe 'When specified by URL', ->
     server = undefined

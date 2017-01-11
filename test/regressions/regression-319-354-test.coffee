@@ -68,7 +68,7 @@ parseOutput = (output) ->
   return results
 
 
-describe 'Regression: Issues #319 and #354', ->
+describe.skip 'Regression: Issues #319 and #354', ->
   results = undefined
 
   brickTypePayload =

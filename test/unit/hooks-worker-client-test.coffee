@@ -32,7 +32,7 @@ loadWorkerClient = (callback) ->
   hooksWorkerClient.start (error) ->
     callback(error)
 
-describe 'Hooks worker client', ->
+describe.skip 'Hooks worker client', ->
   beforeEach ->
     logs = []
 

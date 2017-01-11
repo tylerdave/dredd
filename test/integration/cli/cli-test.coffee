@@ -40,7 +40,7 @@ execCommand = (cmd, options = {}, callback) ->
     callback(undefined, stdout, stderr, exitStatus)
 
 
-describe 'CLI', () ->
+describe.skip 'CLI', () ->
 
   describe "Arguments with existing API description document and responding server", () ->
     describe "when executing the command and the server is responding as specified in the API description", () ->

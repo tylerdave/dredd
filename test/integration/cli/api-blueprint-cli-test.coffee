@@ -8,7 +8,7 @@ fs = require 'fs'
 PORT = 8887
 
 
-describe 'CLI - API Blueprint Document', ->
+describe.skip 'CLI - API Blueprint Document', ->
   server = undefined
   configureServer = (app) ->
     app.get '/single-get.apib', (req, res) ->

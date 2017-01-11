@@ -10,7 +10,7 @@ PORT = 8887
 PORT_APIARY = PORT + 1
 
 
-describe 'CLI - Reporters', ->
+describe.skip 'CLI - Reporters', ->
   server = undefined
 
   configureServer = (app) ->

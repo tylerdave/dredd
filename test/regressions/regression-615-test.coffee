@@ -66,7 +66,7 @@ parseOutput = (output) ->
   return results
 
 
-describe 'Regression: Issue #615', ->
+describe.skip 'Regression: Issue #615', ->
   requests = []
   results = undefined
 

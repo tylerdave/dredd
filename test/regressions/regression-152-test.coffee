@@ -35,7 +35,7 @@ execCommand = (cmd, options = {}, callback) ->
     callback(undefined, stdout, stderr, exitStatus)
 
 
-describe "Regression: Issue #152", () ->
+describe.skip "Regression: Issue #152", () ->
 
   describe 'Modify transaction object inside beforeAll combined with beforeEach helper', () ->
 
