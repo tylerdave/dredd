@@ -1,4 +1,5 @@
 --compilers=coffee:coffee-script/register
---reporter=spec
+--require=coffee-coverage/register
+--reporter=test/reporter.js
 --timeout=12000
 --recursive
