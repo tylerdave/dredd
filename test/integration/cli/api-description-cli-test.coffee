@@ -10,7 +10,7 @@ PORT = 8887
 PORT_NON_EXISTENT = PORT + 1
 
 
-describe.skip 'CLI - API Description Document', ->
+describe 'CLI - API Description Document', ->
   server = undefined
   configureServer = (app) ->
     app.get '/single-get.apib', (req, res) ->
