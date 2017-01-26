@@ -3,7 +3,7 @@
 ## Usage
 
 ```
-$ dredd apiary.apib http://localhost:30000 --hookfiles=./hooks*.js
+$ dredd apiary.apib http://localhost:30000 --hookfiles="./hooks*.js"
 ```
 
 ## API Reference
