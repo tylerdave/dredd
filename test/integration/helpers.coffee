@@ -1,7 +1,9 @@
 clone = require('clone')
+async = require('async')
 express = require('express')
 {spawn} = require('cross-spawn')
 bodyParser = require('body-parser')
+ps = require('ps-node')
 
 logger = require('../../src/logger')
 
@@ -48,7 +50,10 @@ createServer = ->
     serverRuntimeInfo.requestCounts[req.url] ?= 0
     serverRuntimeInfo.requestCounts[req.url] += 1
 
+    # sensible defaults, which can be overriden
     res.type('json')
+    res.status(200)
+
     next()
   )
 
@@ -153,6 +158,22 @@ runDreddCommandWithServer = (args, app, serverPort, callback) ->
   )
 
 
+isProcessRunning = (lookupQuery, callback) ->
+  ps.lookup(lookupQuery, (err, processList) ->
+    callback(err, !!processList?.length)
+  )
+
+
+killProcess = (lookupQuery, callback) ->
+  ps.lookup(lookupQuery, (err, processList) ->
+    return callback(err) if err or not processList.length
+
+    async.each(processList, (process, next) ->
+      ps.kill(process.pid, next)
+    , callback)
+  )
+
+
 module.exports = {
   DEFAULT_SERVER_PORT
   createServer
@@ -160,4 +181,6 @@ module.exports = {
   runDreddWithServer
   runDreddCommand
   runDreddCommandWithServer
+  isProcessRunning
+  killProcess
 }
