@@ -10,7 +10,7 @@ describe('Regression: Issue #615', ->
   beforeEach((done) ->
     app = createServer()
     app.all('/honey', (req, res) ->
-      res.status(200).type('text/plain').send('')
+      res.type('text/plain').send('')
     )
 
     dredd = new Dredd({options: {path: './test/fixtures/regression-615.apib'}})

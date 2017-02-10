@@ -16,10 +16,10 @@ describe.skip 'CLI - Server Process', ->
       app = createServer()
 
       app.get '/machines', (req, res) ->
-        res.send [{type: 'bulldozer', name: 'willy'}]
+        res.json [{type: 'bulldozer', name: 'willy'}]
 
       app.get '/machines/willy', (req, res) ->
-        res.send {type: 'bulldozer', name: 'willy'}
+        res.json {type: 'bulldozer', name: 'willy'}
 
       server = app.listen (err, info) ->
         serverRuntimeInfo = info
