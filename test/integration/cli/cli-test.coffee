@@ -60,7 +60,7 @@ describe 'CLI', ->
 
   describe "when called with arguments", ->
 
-    describe.skip 'when using language hook handler and spawning the server', ->
+    describe 'when using language hook handler and spawning the server', ->
 
       describe "and handler file doesn't exist", ->
         runtimeInfo = undefined
@@ -105,7 +105,7 @@ describe 'CLI', ->
         it 'should not execute any transaction', ->
           assert.deepEqual runtimeInfo.server.requestCounts, {}
 
-      describe 'and handler crashes before execution', ->
+      describe.skip 'and handler crashes before execution', ->
         runtimeInfo = undefined
 
         before (done) ->
@@ -184,8 +184,7 @@ describe 'CLI', ->
         it 'should not execute any transaction', ->
           assert.deepEqual runtimeInfo.server.requestCounts, {}
 
-
-      describe "and handler is killed during execution", ->
+      describe.skip "and handler is killed during execution", ->
 
         before (done) ->
           serverCmd = "./test/fixtures/scripts/endless-nosigterm.sh"
@@ -235,7 +234,7 @@ describe 'CLI', ->
         it 'should execute the transaction', ->
           assert.deepEqual runtimeInfo.server.requestCounts, {'/machines': 1}
 
-      describe "and handler didn't quit but all Dredd tests were OK", ->
+      describe.skip "and handler didn't quit but all Dredd tests were OK", ->
 
         before (done) ->
           serverCmd = "./test/fixtures/scripts/endless-nosigterm.sh"
