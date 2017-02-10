@@ -1,37 +1,15 @@
 clone = require('clone')
+async = require('async')
 express = require('express')
 {spawn} = require('cross-spawn')
 bodyParser = require('body-parser')
+ps = require('ps-node')
 
 logger = require('../../src/logger')
 
 
 DEFAULT_SERVER_PORT = 9876
 DREDD_BIN = require.resolve('../../bin/dredd')
-
-
-# Runs CLI command with given arguments. Records and provides stdout, stderr
-# and also 'output', which is the two combined. Also provides 'exitStatus'
-# of the process.
-runCommand = (command, args, spawnOptions = {}, callback) ->
-  [callback, spawnOptions] = [spawnOptions, undefined] if typeof spawnOptions is 'function'
-
-  stdout = ''
-  stderr = ''
-
-  cli = spawn(command, args, spawnOptions)
-
-  cli.stdout.on('data', (data) -> stdout += data)
-  cli.stderr.on('data', (data) -> stderr += data)
-
-  cli.on('close', (exitStatus) ->
-    callback(null, {stdout, stderr, output: stdout + stderr, exitStatus})
-  )
-
-
-# Runs Dredd as a CLI command, with given arguments.
-runDreddCommand = (args, spawnOptions, callback) ->
-  runCommand('node', [DREDD_BIN].concat(args), spawnOptions, callback)
 
 
 # Creates a new Express.js instance. Automatically records everything about
@@ -72,7 +50,10 @@ createServer = ->
     serverRuntimeInfo.requestCounts[req.url] ?= 0
     serverRuntimeInfo.requestCounts[req.url] += 1
 
+    # sensible defaults, which can be overriden
     res.type('json')
+    res.status(200)
+
     next()
   )
 
@@ -97,6 +78,7 @@ createServer = ->
 runDredd = (dredd, serverPort, callback) ->
   [callback, serverPort] = [serverPort, DEFAULT_SERVER_PORT] if typeof serverPort is 'function'
   dredd.configuration.server ?= "http://127.0.0.1:#{serverPort}"
+
   dredd.configuration.options ?= {}
   dredd.configuration.options.level ?= 'silly'
 
@@ -136,10 +118,69 @@ runDreddWithServer = (dredd, app, serverPort, callback) ->
   )
 
 
+# Runs CLI command with given arguments. Records and provides stdout, stderr
+# and also 'output', which is the two combined. Also provides 'exitStatus'
+# of the process.
+runCommand = (command, args, spawnOptions = {}, callback) ->
+  [callback, spawnOptions] = [spawnOptions, undefined] if typeof spawnOptions is 'function'
+
+  stdout = ''
+  stderr = ''
+
+  cli = spawn(command, args, spawnOptions)
+
+  cli.stdout.on('data', (data) -> stdout += data)
+  cli.stderr.on('data', (data) -> stderr += data)
+
+  cli.on('close', (exitStatus) ->
+    callback(null, {stdout, stderr, output: stdout + stderr, exitStatus})
+  )
+
+
+# Runs Dredd as a CLI command, with given arguments.
+runDreddCommand = (args, spawnOptions, callback) ->
+  runCommand('node', [DREDD_BIN].concat(args), spawnOptions, callback)
+
+
+# Runs given Express.js server instance and then runs Dredd command with given
+# arguments. Collects their runtime information and provides it to the callback.
+runDreddCommandWithServer = (args, app, serverPort, callback) ->
+  [callback, serverPort] = [serverPort, DEFAULT_SERVER_PORT] if typeof serverPort is 'function'
+
+  server = app.listen(serverPort, (err, serverRuntimeInfo) ->
+    return callback(err) if err
+
+    runDreddCommand(args, (err, dreddCommandInfo) ->
+      server.close( ->
+        callback(err, {server: serverRuntimeInfo, dredd: dreddCommandInfo})
+      )
+    )
+  )
+
+
+isProcessRunning = (lookupQuery, callback) ->
+  ps.lookup(lookupQuery, (err, processList) ->
+    callback(err, !!processList?.length)
+  )
+
+
+killProcess = (lookupQuery, callback) ->
+  ps.lookup(lookupQuery, (err, processList) ->
+    return callback(err) if err or not processList.length
+
+    async.each(processList, (process, next) ->
+      ps.kill(process.pid, next)
+    , callback)
+  )
+
+
 module.exports = {
   DEFAULT_SERVER_PORT
-  runDreddCommand
   createServer
   runDredd
   runDreddWithServer
+  runDreddCommand
+  runDreddCommandWithServer
+  isProcessRunning
+  killProcess
 }

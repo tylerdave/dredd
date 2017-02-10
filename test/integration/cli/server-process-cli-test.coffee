@@ -1,7 +1,6 @@
 {assert} = require 'chai'
 
-{runDreddCommand, createServer, DEFAULT_SERVER_PORT} = require '../helpers'
-{isProcessRunning, killAll} = require './helpers'
+{isProcessRunning, killProcess, runDreddCommand, createServer, DEFAULT_SERVER_PORT} = require '../helpers'
 
 
 NON_EXISTENT_PORT = DEFAULT_SERVER_PORT + 1
