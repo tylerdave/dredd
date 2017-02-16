@@ -28,7 +28,7 @@ addHooks = proxyquire  '../../src/add-hooks', {
   'fs': fsStub
 }
 
-describe.skip 'addHooks(runner, transactions, callback)', () ->
+describe 'addHooks(runner, transactions, callback)', () ->
 
   transactions = {}
   server = null
