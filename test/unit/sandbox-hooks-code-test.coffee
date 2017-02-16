@@ -2,7 +2,7 @@
 
 sandboxHooksCode = require '../../src/sandbox-hooks-code'
 
-describe.skip 'sandboxHooksCode(hooksCode, callback)', () ->
+describe 'sandboxHooksCode(hooksCode, callback)', () ->
 
   it 'should be a defined function', () ->
     assert.isFunction sandboxHooksCode
