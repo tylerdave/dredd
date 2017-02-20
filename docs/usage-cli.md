@@ -21,7 +21,7 @@ URL or path to the API description document (API Blueprint, Swagger).
 
 ### API Location (string)
 
-URL, the root address of your API.  
+URL, the root address of your API.
 **Sample values:** `http://127.0.0.1:3000`, `http://api.example.com`
 
 ## Configuration File
@@ -197,3 +197,4 @@ Basic Auth credentials in the form username:password.
 
 ### --version
 Show version number.  
+
