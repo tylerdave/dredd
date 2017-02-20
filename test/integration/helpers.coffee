@@ -122,7 +122,7 @@ runDreddWithServer = (dredd, app, serverPort, callback) ->
 # and also 'output', which is the two combined. Also provides 'exitStatus'
 # of the process.
 runCommand = (command, args, spawnOptions = {}, callback) ->
-  [callback, spawnOptions] = [spawnOptions, undefined] if typeof spawnOptions is 'function'
+  [callback, spawnOptions] = [spawnOptions, {}] if typeof spawnOptions is 'function'
 
   stdout = ''
   stderr = ''
