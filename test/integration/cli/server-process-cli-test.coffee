@@ -3,10 +3,11 @@
 {isProcessRunning, killProcess, runDreddCommand, createServer, DEFAULT_SERVER_PORT} = require '../helpers'
 
 
+COFFEE_BIN = 'node_modules/.bin/coffee'
 NON_EXISTENT_PORT = DEFAULT_SERVER_PORT + 1
 
 
-describe.skip 'CLI - Server Process', ->
+describe 'CLI - Server Process', ->
 
   describe 'When specified by URL', ->
     server = undefined
@@ -65,15 +66,15 @@ describe.skip 'CLI - Server Process', ->
 
   describe 'When specified by -g/--server', ->
 
-    afterEach ->
-      killAll()
+    afterEach (done) ->
+      killProcess({arguments: 'test/fixtures/scripts/'}, done)
 
     describe 'When works as expected', ->
       dreddCommandInfo = undefined
       args = [
         './test/fixtures/single-get.apib'
         "http://127.0.0.1:#{DEFAULT_SERVER_PORT}"
-        "--server='coffee ./test/fixtures/scripts/dummy-server.coffee #{DEFAULT_SERVER_PORT}'"
+        "--server=#{COFFEE_BIN} ./test/fixtures/scripts/dummy-server.coffee #{DEFAULT_SERVER_PORT}"
         '--server-wait=1'
       ]
 
@@ -93,22 +94,22 @@ describe.skip 'CLI - Server Process', ->
     for scenario in [
         description: 'When crashes before requests'
         apiDescriptionDocument: './test/fixtures/single-get.apib'
-        server: './test/fixtures/scripts/exit_3.sh'
+        server: "#{COFFEE_BIN} test/fixtures/scripts/exit-3.coffee"
         expectServerBoot: false
       ,
         description: 'When crashes during requests'
         apiDescriptionDocument: './test/fixtures/apiary.apib'
-        server: "coffee ./test/fixtures/scripts/dummy-server-crash.coffee #{DEFAULT_SERVER_PORT}"
+        server: "#{COFFEE_BIN} test/fixtures/scripts/dummy-server-crash.coffee #{DEFAULT_SERVER_PORT}"
         expectServerBoot: true
       ,
         description: 'When killed before requests'
         apiDescriptionDocument: './test/fixtures/single-get.apib'
-        server: './test/fixtures/scripts/kill-self.sh'
+        server: "#{COFFEE_BIN} test/fixtures/scripts/kill-self.coffee"
         expectServerBoot: false
       ,
         description: 'When killed during requests'
         apiDescriptionDocument: './test/fixtures/apiary.apib'
-        server: "coffee ./test/fixtures/scripts/dummy-server-kill.coffee #{DEFAULT_SERVER_PORT}"
+        server: "#{COFFEE_BIN} test/fixtures/scripts/dummy-server-kill.coffee #{DEFAULT_SERVER_PORT}"
         expectServerBoot: true
     ]
       do (scenario) ->
@@ -117,7 +118,7 @@ describe.skip 'CLI - Server Process', ->
           args = [
             scenario.apiDescriptionDocument
             "http://127.0.0.1:#{DEFAULT_SERVER_PORT}"
-            "--server='#{scenario.server}'"
+            "--server=#{scenario.server}"
             '--server-wait=1'
           ]
 
@@ -131,20 +132,34 @@ describe.skip 'CLI - Server Process', ->
           if scenario.expectServerBoot
             it 'should redirect server\'s boot message', ->
               assert.include dreddCommandInfo.stdout, "Dummy server listening on port #{DEFAULT_SERVER_PORT}"
-          it 'the server should not be running', ->
-            assert.isFalse isProcessRunning scenario.server
+          it 'the server should not be running', (done) ->
+            isProcessRunning({arguments: 'test/fixtures/scripts/'}, (err, isRunning) ->
+              assert.isFalse isRunning unless err
+              done(err)
+            )
           it 'should report problems with connection to server', ->
             assert.include dreddCommandInfo.stderr, 'Error connecting to server'
           it 'should exit with status 1', ->
             assert.equal dreddCommandInfo.exitStatus, 1
 
-
-    describe 'When didn\'t terminate and had to be killed by Dredd', ->
+    # This test is disabled for Windows. There are multiple known issues which
+    # need to be addressed:
+    #
+    # *  Windows do not support graceful termination of command-line processes
+    #    or not in a simple way. CLI process can be only forefully killed, by
+    #    default. Thus the functionality around SIGTERM needs to be either
+    #    marked as unsupported or some special handling needs to be introduced.
+    #
+    # *  Killing a process on Windows requires a bit smarter approach then just
+    #    calling process.kill(), which is what Dredd does as of now. For that
+    #    reason, Dredd isn't able to effectively kill a process on Windows.
+    desc = if process.platform is 'win32' then describe.skip else describe
+    desc 'When didn\'t terminate and had to be killed by Dredd', ->
       dreddCommandInfo = undefined
       args = [
         './test/fixtures/single-get.apib'
         "http://127.0.0.1:#{DEFAULT_SERVER_PORT}"
-        "--server='coffee ./test/fixtures/scripts/dummy-server-nosigterm.coffee #{DEFAULT_SERVER_PORT}'"
+        "--server=#{COFFEE_BIN} test/fixtures/scripts/dummy-server-nosigterm.coffee #{DEFAULT_SERVER_PORT}"
         '--server-wait=1'
       ]
 
@@ -156,12 +171,15 @@ describe.skip 'CLI - Server Process', ->
       it 'should inform about starting server with custom command', ->
         assert.include dreddCommandInfo.stdout, 'Starting backend server process with command'
       it 'should inform about sending SIGTERM', ->
-        assert.include dreddCommandInfo.stdout, 'Sending SIGTERM to backend server process'
+        assert.include dreddCommandInfo.stdout, 'Gracefully terminating backend server process'
       it 'should redirect server\'s message about ignoring SIGTERM', ->
         assert.include dreddCommandInfo.stdout, 'ignoring sigterm'
       it 'should inform about sending SIGKILL', ->
         assert.include dreddCommandInfo.stdout, 'Killing backend server process'
-      it 'the server should not be running', ->
-        assert.isFalse isProcessRunning scenario.server
+      it 'the server should not be running', (done) ->
+        isProcessRunning({arguments: 'test/fixtures/scripts/'}, (err, isRunning) ->
+          assert.isFalse isRunning unless err
+          done(err)
+        )
       it 'should exit with status 0', ->
         assert.equal dreddCommandInfo.exitStatus, 0
