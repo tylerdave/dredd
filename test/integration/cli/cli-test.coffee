@@ -1,7 +1,10 @@
 {assert} = require('chai')
 net = require('net')
 
-{isProcessRunning, killProcess, createServer, runDreddCommandWithServer, runDreddCommand, DEFAULT_SERVER_PORT} = require('../helpers')
+{isProcessRunning, killAll, createServer, runDreddCommandWithServer, runDreddCommand, DEFAULT_SERVER_PORT} = require('../helpers')
+
+COFFEE_BIN = 'node_modules/.bin/coffee'
+DEFAULT_HOOK_HANDLER_PORT = 61321
 
 
 describe 'CLI', ->
@@ -75,7 +78,7 @@ describe 'CLI', ->
             "http://127.0.0.1:#{DEFAULT_SERVER_PORT}"
             '--no-color'
             '--server-wait=0'
-            '--language=./foo/bar.sh'
+            '--language=foo/bar/hook-handler'
             '--hookfiles=./test/fixtures/scripts/emptyfile'
           ]
           runDreddCommandWithServer(args, app, (err, info) ->
@@ -84,7 +87,7 @@ describe 'CLI', ->
           )
 
         after (done) ->
-          killProcess({arguments: 'test/fixtures/scripts/'}, done)
+          killAll('test/fixtures/scripts/', done)
 
         it 'should return with status 1', ->
           assert.equal runtimeInfo.dredd.exitStatus, 1
@@ -97,7 +100,7 @@ describe 'CLI', ->
           assert.include runtimeInfo.dredd.stderr, 'not found'
 
         it 'should term or kill the server', (done) ->
-          isProcessRunning({arguments: 'endless-nosigterm'}, (err, isRunning) ->
+          isProcessRunning('endless-nosigterm', (err, isRunning) ->
             assert.isFalse isRunning unless err
             done(err)
           )
@@ -118,7 +121,7 @@ describe 'CLI', ->
             "http://127.0.0.1:#{DEFAULT_SERVER_PORT}"
             '--no-color'
             '--server-wait=0'
-            '--language=./test/fixtures/scripts/exit_3.sh'
+            "--language=#{COFFEE_BIN} ./test/fixtures/scripts/exit-3.coffee"
             '--hookfiles=./test/fixtures/scripts/emptyfile'
           ]
           runDreddCommandWithServer(args, app, (err, info) ->
@@ -127,7 +130,7 @@ describe 'CLI', ->
           )
 
         after (done) ->
-          killProcess({arguments: 'test/fixtures/scripts/'}, done)
+          killAll('test/fixtures/scripts/', done)
 
         it 'should return with status 1', ->
           assert.equal runtimeInfo.dredd.exitStatus, 1
@@ -136,7 +139,7 @@ describe 'CLI', ->
           assert.include runtimeInfo.dredd.stderr, 'exited'
 
         it 'should term or kill the server', (done) ->
-          isProcessRunning({arguments: 'endless-nosigterm'}, (err, isRunning) ->
+          isProcessRunning('endless-nosigterm', (err, isRunning) ->
             assert.isFalse isRunning unless err
             done(err)
           )
@@ -156,9 +159,9 @@ describe 'CLI', ->
             './test/fixtures/single-get.apib'
             "http://127.0.0.1:#{DEFAULT_SERVER_PORT}"
             '--no-color'
-            '--server=./test/fixtures/scripts/endless-nosigterm.sh'
+            "--server=#{COFFEE_BIN} ./test/fixtures/scripts/endless-nosigterm.coffee"
             '--server-wait=0'
-            '--language=./test/fixtures/scripts/kill-self.sh'
+            "--language=#{COFFEE_BIN} ./test/fixtures/scripts/kill-self.coffee"
             '--hookfiles=./test/fixtures/scripts/emptyfile'
           ]
           runDreddCommandWithServer(args, app, (err, info) ->
@@ -167,7 +170,7 @@ describe 'CLI', ->
           )
 
         after (done) ->
-          killProcess({arguments: 'test/fixtures/scripts/'}, done)
+          killAll('test/fixtures/scripts/', done)
 
         it 'should return with status 1', ->
           assert.equal runtimeInfo.dredd.exitStatus, 1
@@ -176,7 +179,7 @@ describe 'CLI', ->
           assert.include runtimeInfo.dredd.stderr, 'killed'
 
         it 'should term or kill the server', (done) ->
-          isProcessRunning({arguments: 'endless-nosigterm'}, (err, isRunning) ->
+          isProcessRunning('endless-nosigterm', (err, isRunning) ->
             assert.isFalse isRunning unless err
             done(err)
           )
@@ -184,41 +187,46 @@ describe 'CLI', ->
         it 'should not execute any transaction', ->
           assert.deepEqual runtimeInfo.server.requestCounts, {}
 
-
       describe "and handler is killed during execution", ->
+        runtimeInfo = undefined
+
+        isHookHandlerProcess = (processListItem) ->
+          return false if processListItem.fullCommand.indexOf('dredd') > -1
+          return processListItem.fullCommand.indexOf('foo/bar/hooks') > -1
 
         before (done) ->
-          serverCmd = "./test/fixtures/scripts/endless-nosigterm.sh"
-          languageCmd = "./test/fixtures/scripts/endless-nosigterm.sh"
-          hookFiles = "./test/fixtures/scripts/hooks-kill-after-all.coffee"
-          cmd = "dredd ./test/fixtures/single-get.apib http://127.0.0.1:#{DEFAULT_SERVER_PORT} --no-color --server=#{serverCmd} --language=#{languageCmd} --hookfiles=#{hookFiles} --server-wait=0"
-
-          killHandlerCmd = 'ps aux | grep "bash" | grep "endless-nosigterm.sh" | grep -v grep | awk \'{print $2}\' | xargs kill -9'
-
           app = createServer()
-
           app.get '/machines', (req, res) ->
-            exec killHandlerCmd, (error, stdout, stderr) ->
-              done error if error
+            killAll(isHookHandlerProcess, (err) ->
+              console.error(err) if err
               res.json([{type: 'bulldozer', name: 'willy'}])
+            )
 
           # TCP server echoing transactions back
-          hookServer = net.createServer (socket) ->
-
+          hookHandler = net.createServer (socket) ->
             socket.on 'data', (data) ->
               socket.write data
 
-          hookServer.listen 61321, ->
-            server = app.listen PORT, ->
-              execCommand cmd, ->
-                server.close()
-
-            server.on 'close', ->
-              hookServer.close()
-              done()
+          args = [
+            './test/fixtures/single-get.apib'
+            "http://127.0.0.1:#{DEFAULT_SERVER_PORT}"
+            '--no-color'
+            "--server=#{COFFEE_BIN} ./test/fixtures/scripts/endless-nosigterm.coffee"
+            '--server-wait=0'
+            "--language=#{COFFEE_BIN} ./test/fixtures/scripts/endless-nosigterm.coffee"
+            '--hookfiles=foo/bar/hooks'
+            '--level=silly'
+          ]
+          hookHandler.listen DEFAULT_HOOK_HANDLER_PORT, ->
+            runDreddCommandWithServer(args, app, (err, info) ->
+              hookHandler.close()
+              runtimeInfo = info
+              console.log runtimeInfo.dredd.output
+              done(err)
+            )
 
         after (done) ->
-          killProcess({arguments: 'test/fixtures/scripts/'}, done)
+          killAll('test/fixtures/scripts/', done)
 
         it 'should return with status 1', ->
           assert.equal runtimeInfo.dredd.exitStatus, 1
@@ -227,7 +235,7 @@ describe 'CLI', ->
           assert.include runtimeInfo.dredd.stderr, 'killed'
 
         it 'should term or kill the server', (done) ->
-          isProcessRunning({arguments: 'endless-nosigterm'}, (err, isRunning) ->
+          isProcessRunning('endless-nosigterm', (err, isRunning) ->
             assert.isFalse isRunning unless err
             done(err)
           )
@@ -254,8 +262,8 @@ describe 'CLI', ->
             socket.on 'data', (data) ->
               socket.write data
 
-          hookServer.listen 61321, ->
-            server = app.listen PORT, ->
+          hookServer.listen DEFAULT_HOOK_HANDLER_PORT, ->
+            server = app.listen DEFAULT_SERVER_PORT, ->
               execCommand cmd, ->
                 server.close()
 
@@ -264,7 +272,7 @@ describe 'CLI', ->
               done()
 
         after (done) ->
-          killProcess({arguments: 'test/fixtures/scripts/'}, done)
+          killAll('test/fixtures/scripts/', done)
 
         it 'should return with status 0', ->
           assert.equal runtimeInfo.dredd.exitStatus, 0
@@ -274,13 +282,13 @@ describe 'CLI', ->
           assert.notInclude stderr, 'exited'
 
         it 'should kill the handler', (done) ->
-          isProcessRunning({arguments: 'dredd-fake-handler'}, (err, isRunning) ->
+          isProcessRunning('dredd-fake-handler', (err, isRunning) ->
             assert.isFalse isRunning unless err
             done(err)
           )
 
         it 'should kill the server', (done) ->
-          isProcessRunning({arguments: 'dredd-fake-server'}, (err, isRunning) ->
+          isProcessRunning('dredd-fake-server', (err, isRunning) ->
             assert.isFalse isRunning unless err
             done(err)
           )

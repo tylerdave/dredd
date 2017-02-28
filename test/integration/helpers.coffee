@@ -158,19 +158,48 @@ runDreddCommandWithServer = (args, app, serverPort, callback) ->
   )
 
 
-isProcessRunning = (lookupQuery, callback) ->
-  ps.lookup(lookupQuery, (err, processList) ->
+lookupProcess = (filterFn, callback) ->
+  if typeof filterFn isnt 'function'
+    filterFn = (processListItem) -> new RegExp(filterFn).test(processListItem.fullCommand)
+
+  ps.lookup({}, (err, processList) ->
+    return callback(err) if err
+
+    for processListItem in processList
+      fullCommand = processListItem.command
+      fullCommand += ' ' + processListItem.arguments.join(' ') if processListItem.arguments.length
+      processListItem.fullCommand = fullCommand
+
+    callback(null, processList.filter(filterFn))
+  )
+
+
+isProcessRunning = (filterFn, callback) ->
+  lookupProcess(filterFn, (err, processList) ->
     callback(err, !!processList?.length)
   )
 
 
-killProcess = (lookupQuery, callback) ->
-  ps.lookup(lookupQuery, (err, processList) ->
+killAll = (filterFn, callback) ->
+  lookupProcess(filterFn, (err, processList) ->
     return callback(err) if err or not processList.length
 
-    async.each(processList, (process, next) ->
-      ps.kill(process.pid, next)
-    , callback)
+    async.each(processList, (processListItem, next) ->
+      ps.kill(processListItem.pid, next)
+    , (err) ->
+      return callback(err) if err
+
+      # Killing processes is asynchronous and can take some time, especially
+      # when the process gets to uninterruptable sleep because of wating until
+      # a system call completes.
+      async.retry({times: 5, interval: 10000}, (next) ->
+        isProcessRunning(filterFn, (err, isRunning) ->
+          console.log('is running?', isRunning)
+          err ?= new Error('Some processes are not down yet') if isRunning
+          next(err)
+        )
+      , callback)
+    )
   )
 
 
@@ -182,5 +211,5 @@ module.exports = {
   runDreddCommand
   runDreddCommandWithServer
   isProcessRunning
-  killProcess
+  killAll
 }
