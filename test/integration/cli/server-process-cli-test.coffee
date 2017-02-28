@@ -1,6 +1,6 @@
 {assert} = require 'chai'
 
-{isProcessRunning, killProcess, runDreddCommand, createServer, DEFAULT_SERVER_PORT} = require '../helpers'
+{isProcessRunning, killAll, runDreddCommand, createServer, DEFAULT_SERVER_PORT} = require '../helpers'
 
 
 COFFEE_BIN = 'node_modules/.bin/coffee'
@@ -67,7 +67,7 @@ describe 'CLI - Server Process', ->
   describe 'When specified by -g/--server', ->
 
     afterEach (done) ->
-      killProcess({arguments: 'test/fixtures/scripts/'}, done)
+      killAll('test/fixtures/scripts/', done)
 
     describe 'When works as expected', ->
       dreddCommandInfo = undefined
@@ -133,7 +133,7 @@ describe 'CLI - Server Process', ->
             it 'should redirect server\'s boot message', ->
               assert.include dreddCommandInfo.stdout, "Dummy server listening on port #{DEFAULT_SERVER_PORT}"
           it 'the server should not be running', (done) ->
-            isProcessRunning({arguments: 'test/fixtures/scripts/'}, (err, isRunning) ->
+            isProcessRunning('test/fixtures/scripts/', (err, isRunning) ->
               assert.isFalse isRunning unless err
               done(err)
             )
@@ -153,8 +153,8 @@ describe 'CLI - Server Process', ->
     # *  Killing a process on Windows requires a bit smarter approach then just
     #    calling process.kill(), which is what Dredd does as of now. For that
     #    reason, Dredd isn't able to effectively kill a process on Windows.
-    desc = if process.platform is 'win32' then describe.skip else describe
-    desc 'When didn\'t terminate and had to be killed by Dredd', ->
+    describeNotWindows = if process.platform is 'win32' then describe.skip else describe
+    describeNotWindows 'When didn\'t terminate and had to be killed by Dredd', ->
       dreddCommandInfo = undefined
       args = [
         './test/fixtures/single-get.apib'
@@ -177,7 +177,7 @@ describe 'CLI - Server Process', ->
       it 'should inform about sending SIGKILL', ->
         assert.include dreddCommandInfo.stdout, 'Killing backend server process'
       it 'the server should not be running', (done) ->
-        isProcessRunning({arguments: 'test/fixtures/scripts/'}, (err, isRunning) ->
+        isProcessRunning('test/fixtures/scripts/', (err, isRunning) ->
           assert.isFalse isRunning unless err
           done(err)
         )
